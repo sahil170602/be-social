@@ -7,13 +7,20 @@ export default function SplashScreen() {
 
   useEffect(() => {
     const checkAuthAndNavigate = () => {
+<<<<<<< HEAD
       // 1. Check for persistent login and role
       const savedPhone = localStorage.getItem('sb_user_phone');
       const userRole = localStorage.getItem('user_role');
+=======
+      // 1. Check for persistent login and specific role
+      const savedPhone = localStorage.getItem('sb_user_phone');
+      const role = localStorage.getItem('user_role');
+>>>>>>> 156638f6e2bff6d51419cdd9fa8935ec56842993
       
       // 2. Extended timeout for the cinematic animation
       const timer = setTimeout(() => {
         if (savedPhone) {
+<<<<<<< HEAD
           // Check role to decide destination
           if (userRole === 'pro') {
             navigate('/pro-dashboard', { replace: true });
@@ -23,6 +30,19 @@ export default function SplashScreen() {
         } else {
           // New user or logged out
           navigate('/select-role', { replace: true }); 
+=======
+          // --- FIXED ROLE-BASED REDIRECT ---
+          if (role === 'pro') {
+            // If professional, go to Pro dashboard
+            navigate('/pro-dashboard', { replace: true });
+          } else {
+            // If standard user, go to User home
+            navigate('/home', { replace: true });
+          }
+        } else {
+          // Otherwise, go to Role selection
+          navigate('/select-role', { replace: true });
+>>>>>>> 156638f6e2bff6d51419cdd9fa8935ec56842993
         }
       }, 4800);
 
@@ -37,16 +57,20 @@ export default function SplashScreen() {
       initial={{ opacity: 0 }} 
       animate={{ opacity: 1 }} 
       exit={{ opacity: 0 }}
-      className="bg-glow fixed inset-0 flex flex-col items-center justify-center bg-[#0a0a0a] z-50 h-[100dvh] overflow-hidden select-none"
+      className="fixed inset-0 flex flex-col items-center justify-center bg-[#0a0a0a] z-[1000] h-[100dvh] overflow-hidden select-none"
     >
+<<<<<<< HEAD
       {/* Background Decorative Glow */}
+=======
+      {/* Background decorative glow */}
+>>>>>>> 156638f6e2bff6d51419cdd9fa8935ec56842993
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full blur-[120px] opacity-10 bg-brand-purple" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full blur-[120px] opacity-10 bg-brand-pink" />
 
-      {/* Main Logo Container */}
+      {/* Main logo container */}
       <div className="relative flex items-center text-6xl md:text-8xl font-black tracking-tighter">
         
-        {/* "BE" */}
+        {/* "Be" */}
         <motion.span
           initial={{ x: -220, opacity: 0, filter: "blur(15px)" }}
           animate={{ x: 0, opacity: 1, filter: "blur(0px)" }}
@@ -55,12 +79,12 @@ export default function SplashScreen() {
             ease: [0.16, 1, 0.3, 1],
             delay: 0.3 
           }}
-          className="bg-gradient-to-r from-brand-purple to-brand-pink bg-clip-text text-transparent pr-2"
+          className="bg-gradient-to-r from-brand-purple to-brand-pink bg-clip-text text-transparent pr-3"
         >
           Be
         </motion.span>
         
-        {/* "SOCIAL" */}
+        {/* "social" */}
         <motion.span
           initial={{ x: 220, opacity: 0, filter: "blur(15px)" }}
           animate={{ x: 0, opacity: 1, filter: "blur(0px)" }}
@@ -71,7 +95,7 @@ export default function SplashScreen() {
           }}
           className="bg-gradient-to-r from-brand-purple to-brand-pink bg-clip-text text-transparent"
         >
-          Social
+          social
         </motion.span>
       </div>
 
@@ -80,7 +104,7 @@ export default function SplashScreen() {
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 2.2, duration: 1.2, ease: "easeOut" }}
-        className="mt-4 flex items-center gap-4 text-[14px] md:text-md font-bold tracking-[0.1em] text-white/40"
+        className="mt-4 flex items-center gap-4 text-[14px] font-bold tracking-[0.1em] text-white/40"
       >
         <span>Find</span>
         <div className="h-1 w-1 rounded-full bg-brand-pink/40" />
@@ -89,7 +113,7 @@ export default function SplashScreen() {
         <span>Meet</span>
       </motion.div>
 
-      {/* Subtle Loading Indicator */}
+      {/* Subtle loading indicator at bottom */}
       <motion.div 
         initial={{ scaleX: 0 }}
         animate={{ scaleX: 1 }}
