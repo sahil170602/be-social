@@ -117,9 +117,9 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white font-sans selection:bg-brand-purple/30 pb-32">
+    <div className="min-h-screen bg-[#0a0a0a] text-white font-sans selection:bg-brand-purple/30 pb-20">
       {/* ADDED pt-14 and pb-4 HERE to push the header down below the Android status bar */}
-      <nav className="sticky top-0 z-50 bg-[#0a0a0a]/80 backdrop-blur-md border-b border-white/5 px-6 pb-4 pt-14">
+      <nav className="sticky top-0 z-50 bg-[#0a0a0a]/80 backdrop-blur-md border-b border-white/5 px-6 pb-4 pt-4">
         <div className="max-w-5xl mx-auto flex justify-between items-center">
           <h1 className="font-extrabold text-[30px] bg-gradient-to-r from-brand-purple to-brand-pink bg-clip-text text-transparent tracking-tighter">Be Social</h1>
           <div className="flex items-center gap-4">
