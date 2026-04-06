@@ -6,6 +6,7 @@ import {
   Calendar, Clock, MapPin, MessageSquare, Home 
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { App as CapApp } from '@capacitor/app';
 
 export default function CheckoutPage() {
   const { state } = useLocation();
@@ -15,13 +16,37 @@ export default function CheckoutPage() {
   const [pro, setPro] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [createdMeetingId, setCreatedMeetingId] = useState<string | null>(null);
 
-  const subtotal = state?.price || 0;
+  // --- Auto calculated fees ---
+  const subtotal = state?.totalPrice || 0;
   const serviceFee = Math.round(subtotal * 0.05);
   const totalAmount = subtotal + serviceFee;
 
+  // --- Smart navigation logic (android & windows) ---
   useEffect(() => {
-    // Safety redirect if accessed without booking state
+    const handleBackAction = (e?: any) => {
+      if (showSuccess) {
+        // Force navigate to home if the success popup is active
+        if (e) e.preventDefault();
+        navigate('/home', { replace: true });
+      } else {
+        // Standard back behavior for checkout
+        navigate(-1);
+      }
+    };
+
+    // Listeners for hardware and browser back buttons
+    const capListener = CapApp.addListener('backButton', handleBackAction);
+    window.addEventListener('popstate', handleBackAction);
+
+    return () => {
+      capListener.then(l => l.remove());
+      window.removeEventListener('popstate', handleBackAction);
+    };
+  }, [navigate, showSuccess]);
+
+  useEffect(() => {
     if (!state) {
       navigate('/explore');
       return;
@@ -52,7 +77,7 @@ export default function CheckoutPage() {
 
       if (userError || !userData) throw new Error("User not found");
 
-      // 1. Create the Meeting Entry
+      // 1. Create the meeting entry
       const { data: newMeeting, error: meetingError } = await supabase
         .from('meetings')
         .insert({
@@ -72,15 +97,21 @@ export default function CheckoutPage() {
 
       if (meetingError) throw meetingError;
 
-      // 2. Initialize the Chat with a system message
+      // Capture ID for direct chat access
+      setCreatedMeetingId(newMeeting.id);
+
+      // 2. Initialize the chat
       await supabase.from('messages').insert({
         meeting_id: newMeeting.id,
         sender_id: userData.id,
         sender_type: 'user',
-        text: `📅 Booking Request sent for ${state.date}. Waiting for confirmation.`
+        text: `Booking request sent for ${state.date}. Waiting for confirmation.`
       });
       
+      // Trap the back button by pushing a dummy entry to history
+      window.history.pushState(null, '', window.location.pathname);
       setShowSuccess(true);
+      
     } catch (err) {
       console.error(err);
       alert("Payment processing failed. Please try again.");
@@ -90,9 +121,9 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white p-6 pt-14 antialiased relative overflow-hidden">
+    <div className="min-h-screen bg-[#0a0a0a] text-white p-6 pt-4 pb-4 antialiased relative overflow-hidden font-sans">
       
-      {/* Background Ambient Glow */}
+      {/* Background ambient glow */}
       <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-brand-purple/10 blur-[120px] pointer-events-none" />
 
       <header className="flex items-center gap-4 mb-8 relative z-10">
@@ -102,26 +133,26 @@ export default function CheckoutPage() {
         >
           <ArrowLeft size={20} />
         </button>
-        <h1 className="text-xl font-black tracking-tighter">
-          SECURE <span className="text-primary-gradient">CHECKOUT</span>
+        <h1 className="text-2xl font-black tracking-tight">
+          Secure <span className="text-primary-gradient">checkout</span>
         </h1>
       </header>
 
       <div className="max-w-md mx-auto space-y-6 relative z-10">
         
-        {/* Booking Summary Card */}
-        <div className="glass rounded-[2.5rem] p-6 shadow-2xl border-white/5">
-          <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-4">Review Session</p>
+        {/* Booking summary card */}
+        <div className="bg-white/[0.03] border border-white/5 rounded-[2.5rem] p-6 shadow-2xl">
+          <p className="text-[10px] font-bold text-zinc-500 mb-4 tracking-tight">Review session</p>
           
           <div className="flex items-center gap-4 mb-6 border-b border-white/5 pb-5">
             <img 
-              src={pro?.avatar_url || 'https://via.placeholder.com/150'} 
+              src={pro?.avatar_url || 'https://placehold.co/150x150/111/fff?text=Pro'} 
               className="w-14 h-14 rounded-2xl object-cover border border-white/10 shadow-lg" 
-              alt="" 
+              alt="Expert" 
             />
             <div>
-              <h4 className="font-bold text-lg leading-tight">{pro?.full_name}</h4>
-              <p className="text-brand-pink text-xs font-bold uppercase tracking-wider">
+              <h4 className="font-bold text-lg leading-tight capitalize">{pro?.full_name}</h4>
+              <p className="text-brand-purple text-xs font-bold mt-1 capitalize">
                 {pro?.profession}
               </p>
             </div>
@@ -144,62 +175,62 @@ export default function CheckoutPage() {
               <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center">
                 <MapPin size={14} className="text-brand-purple" />
               </div>
-              <span className="text-sm font-medium truncate">{state?.place}</span>
+              <span className="text-sm font-medium truncate capitalize">{state?.place}</span>
             </div>
           </div>
         </div>
 
-        {/* Payment Method Selector */}
+        {/* Payment method selector */}
         <div className="space-y-3">
-          <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest ml-4">Payment Method</p>
-          <div className="p-5 bg-brand-purple/5 border border-brand-purple/20 rounded-3xl flex items-center justify-between">
+          <p className="text-[10px] font-bold text-zinc-500 ml-4 tracking-tight">Payment method</p>
+          <div className="p-5 bg-white/5 border border-white/10 rounded-3xl flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-brand-purple/10 rounded-2xl flex items-center justify-center text-brand-purple border border-brand-purple/10">
+              <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-brand-purple border border-white/10">
                 <CreditCard size={24} />
               </div>
               <div>
-                <p className="text-sm font-bold">Instant Wallet / UPI</p>
-                <p className="text-[10px] text-zinc-500 font-medium uppercase tracking-tight">Encrypted & Secure</p>
+                <p className="text-sm font-bold">Instant wallet / Upi</p>
+                <p className="text-[10px] text-zinc-500 font-medium">Encrypted & secure</p>
               </div>
             </div>
-            <div className="w-6 h-6 rounded-full border-2 border-brand-purple flex items-center justify-center">
-              <div className="w-3 h-3 bg-brand-purple rounded-full shadow-[0_0_12px_rgba(168,85,247,0.6)]" />
+            <div className="w-6 h-6 rounded-full border-2 border-primary-gradient flex items-center justify-center">
+              <div className="w-3 h-3 bg-primary-gradient rounded-full shadow-lg shadow-brand-purple/40" />
             </div>
           </div>
         </div>
 
-        {/* Pricing Detail */}
+        {/* Pricing detail */}
         <div className="p-8 bg-white/[0.02] border border-white/5 rounded-[2.5rem] space-y-4 shadow-inner">
           <div className="flex justify-between text-zinc-400 text-sm font-medium">
-            <span>Consultation Fee</span>
+            <span>Duration fee</span>
             <span className="text-white">₹{subtotal}</span>
           </div>
           <div className="flex justify-between text-zinc-400 text-sm font-medium">
-            <span>Service Fee (5%)</span>
+            <span>Service fee (5%)</span>
             <span className="text-white">₹{serviceFee}</span>
           </div>
           <div className="h-px bg-white/5 w-full my-4" />
           <div className="flex justify-between items-center">
-            <span className="text-lg font-bold">Total Amount</span>
+            <span className="text-lg font-bold">Total amount</span>
             <span className="text-3xl font-black text-primary-gradient tracking-tighter">₹{totalAmount}</span>
           </div>
         </div>
 
-        {/* Action Button */}
+        {/* Action button */}
         <button 
           onClick={processPaymentAndBook}
           disabled={isProcessing}
-          className="w-full bg-primary-gradient py-6 rounded-3xl font-bold text-sm uppercase tracking-[0.2em] shadow-2xl shadow-brand-purple/20 active:scale-95 transition-all flex items-center justify-center gap-3 text-white disabled:opacity-40"
+          className="w-full bg-primary-gradient py-6 rounded-3xl font-bold text-sm tracking-widest shadow-2xl shadow-brand-purple/20 active:scale-95 transition-all flex items-center justify-center gap-3 text-white disabled:opacity-40"
         >
           {isProcessing ? (
             <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin" />
           ) : (
-            <>Pay & Confirm Booking <ShieldCheck size={20} /></>
+            <>Pay & confirm booking <ShieldCheck size={20} /></>
           )}
         </button>
       </div>
 
-      {/* Success Modal Overlay */}
+      {/* Success modal overlay */}
       <AnimatePresence>
         {showSuccess && (
           <motion.div 
@@ -217,24 +248,24 @@ export default function CheckoutPage() {
                 <CheckCircle className="text-emerald-500" size={48} />
               </div>
               
-              <h2 className="text-4xl font-black mb-3 tracking-tighter text-white uppercase">Confirmed!</h2>
+              <h2 className="text-4xl font-black mb-3 tracking-tighter text-white">Confirmed!</h2>
               <p className="text-zinc-500 font-medium text-sm mb-12">
                 Your appointment has been registered. You can now chat with your pro.
               </p>
 
               <div className="space-y-4">
                 <button 
-                  onClick={() => navigate('/messages')} 
-                  className="w-full bg-primary-gradient py-5 rounded-3xl font-bold text-sm uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl active:scale-95 transition-all"
+                  onClick={() => navigate(`/messages?chat=${createdMeetingId}`)} 
+                  className="w-full bg-primary-gradient py-5 rounded-3xl font-bold text-sm flex items-center justify-center gap-3 shadow-xl active:scale-95 transition-all"
                 >
-                  <MessageSquare size={20} /> Open Chat
+                  <MessageSquare size={20} /> Open chat
                 </button>
 
                 <button 
                   onClick={() => navigate('/home')}
-                  className="w-full bg-white/5 border border-white/10 py-5 rounded-3xl font-bold text-sm uppercase tracking-widest flex items-center justify-center gap-3 active:scale-95 transition-all text-zinc-400 hover:text-white"
+                  className="w-full bg-white/5 border border-white/10 py-5 rounded-3xl font-bold text-sm flex items-center justify-center gap-3 active:scale-95 transition-all text-zinc-400 hover:text-white"
                 >
-                  <Home size={20} /> Back to Home
+                  <Home size={20} /> Back to home
                 </button>
               </div>
             </motion.div>

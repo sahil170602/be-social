@@ -124,9 +124,9 @@ export default function RoleSelection() {
         {/* Footnote */}
         <motion.p 
           variants={itemVariants} 
-          className="mt-12 text-[10px] uppercase font-bold tracking-[0.2em] text-zinc-600"
+          className="mt-12 text-[10px]  font-bold tracking-[0.1em] text-zinc-600"
         >
-          All professionals undergo a verification process
+          v1.0
         </motion.p>
       </motion.div>
     </div>

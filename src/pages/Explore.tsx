@@ -75,10 +75,10 @@ export default function Explore() {
 
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white font-sans selection:bg-brand-purple/30 pb-32">
+    <div className="min-h-screen bg-[#0a0a0a] text-white font-sans selection:bg-brand-purple/30 pb-20">
       
       
-      <header className="sticky top-0 z-50 bg-[#0a0a0a]/90 backdrop-blur-xl border-b border-white/5 p-4 pt-14">
+      <header className="sticky top-0 z-50 bg-[#0a0a0a]/90 backdrop-blur-xl border-b border-white/5 p-4 pt-4">
         <div className="w-full space-y-6">
           <div className="flex justify-between items-center">
             <h1 className="text-3xl font-black tracking-tighter">Explore</h1>

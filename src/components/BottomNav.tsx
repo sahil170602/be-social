@@ -14,7 +14,7 @@ export default function BottomNav() {
   ];
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-50">
+    <div className="fixed bottom-1 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-50">
       <div className="bg-black/30 backdrop-blur-2xl border border-white/10 rounded-[32px] p-3 flex justify-between items-center shadow-2xl shadow-black/50">
         {navItems.map((item) => {
           // Syncs isActive with the actual URL from react-router

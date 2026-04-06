@@ -7,17 +7,22 @@ export default function SplashScreen() {
 
   useEffect(() => {
     const checkAuthAndNavigate = () => {
-      // 1. Check for our custom persistent login key
+      // 1. Check for persistent login and role
       const savedPhone = localStorage.getItem('sb_user_phone');
+      const userRole = localStorage.getItem('user_role');
       
-      // 2. Extended timeout to allow the slow, cinematic animation to finish
+      // 2. Extended timeout for the cinematic animation
       const timer = setTimeout(() => {
         if (savedPhone) {
-          // If phone exists, user is "logged in", go Home
-          navigate('/home'); 
+          // Check role to decide destination
+          if (userRole === 'pro') {
+            navigate('/pro-dashboard', { replace: true });
+          } else {
+            navigate('/home', { replace: true });
+          }
         } else {
-          // Otherwise, go to Role Selection
-          navigate('/select-role'); 
+          // New user or logged out
+          navigate('/select-role', { replace: true }); 
         }
       }, 4800);
 
@@ -34,7 +39,7 @@ export default function SplashScreen() {
       exit={{ opacity: 0 }}
       className="bg-glow fixed inset-0 flex flex-col items-center justify-center bg-[#0a0a0a] z-50 h-[100dvh] overflow-hidden select-none"
     >
-      {/* Background Decorative Glow (Matches Auth UI) */}
+      {/* Background Decorative Glow */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full blur-[120px] opacity-10 bg-brand-purple" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full blur-[120px] opacity-10 bg-brand-pink" />
 

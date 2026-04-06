@@ -26,7 +26,7 @@ export default function UserMeetings() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white p-6 pt-14 pb-32">
+    <div className="min-h-screen bg-[#0a0a0a] text-white p-6 pt-4 pb-24">
       <header className="mb-8">
         <h1 className="text-3xl font-black tracking-tighter">MY <span className="text-primary-gradient">SESSIONS</span></h1>
         <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest mt-1">Manage your bookings</p>
