@@ -7,30 +7,13 @@ export default function SplashScreen() {
 
   useEffect(() => {
     const checkAuthAndNavigate = () => {
-<<<<<<< HEAD
-      // 1. Check for persistent login and role
-      const savedPhone = localStorage.getItem('sb_user_phone');
-      const userRole = localStorage.getItem('user_role');
-=======
       // 1. Check for persistent login and specific role
       const savedPhone = localStorage.getItem('sb_user_phone');
       const role = localStorage.getItem('user_role');
->>>>>>> 156638f6e2bff6d51419cdd9fa8935ec56842993
       
       // 2. Extended timeout for the cinematic animation
       const timer = setTimeout(() => {
         if (savedPhone) {
-<<<<<<< HEAD
-          // Check role to decide destination
-          if (userRole === 'pro') {
-            navigate('/pro-dashboard', { replace: true });
-          } else {
-            navigate('/home', { replace: true });
-          }
-        } else {
-          // New user or logged out
-          navigate('/select-role', { replace: true }); 
-=======
           // --- FIXED ROLE-BASED REDIRECT ---
           if (role === 'pro') {
             // If professional, go to Pro dashboard
@@ -42,7 +25,6 @@ export default function SplashScreen() {
         } else {
           // Otherwise, go to Role selection
           navigate('/select-role', { replace: true });
->>>>>>> 156638f6e2bff6d51419cdd9fa8935ec56842993
         }
       }, 4800);
 
@@ -59,11 +41,7 @@ export default function SplashScreen() {
       exit={{ opacity: 0 }}
       className="fixed inset-0 flex flex-col items-center justify-center bg-[#0a0a0a] z-[1000] h-[100dvh] overflow-hidden select-none"
     >
-<<<<<<< HEAD
-      {/* Background Decorative Glow */}
-=======
       {/* Background decorative glow */}
->>>>>>> 156638f6e2bff6d51419cdd9fa8935ec56842993
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full blur-[120px] opacity-10 bg-brand-purple" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full blur-[120px] opacity-10 bg-brand-pink" />
 
