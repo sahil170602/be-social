@@ -21,6 +21,7 @@ import UserMessages from './pages/UserMessages';
 import ProMessages from './pages/ProMessages'; 
 import ProWallet from './pages/ProWallet';
 import ProProfileEdit from './pages/ProProfileEdit';
+import ProNotifications from './pages/ProNotifications'; // <-- NEW IMPORT
 import BottomNav from './components/BottomNav';
 
 const UserRoute = ({ children }: { children: React.ReactNode }) => {
@@ -101,6 +102,7 @@ function AnimatedRoutes() {
           <Route path="/pro-messages" element={<ProRoute><ProMessages /></ProRoute>} />
           <Route path="/wallet" element={<ProRoute><ProWallet /></ProRoute>} />
           <Route path="/pro-profile-edit" element={<ProRoute><ProProfileEdit /></ProRoute>} />
+          <Route path="/pro-notifications" element={<ProRoute><ProNotifications /></ProRoute>} /> {/* <-- NEW ROUTE */}
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
