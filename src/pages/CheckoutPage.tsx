@@ -77,7 +77,7 @@ export default function CheckoutPage() {
 
       if (userError || !userData) throw new Error("User not found");
 
-      // 1. Create the meeting entry
+      // ALWAYS CREATE A NEW MEETING ROW (No overwriting data)
       const { data: newMeeting, error: meetingError } = await supabase
         .from('meetings')
         .insert({
@@ -96,16 +96,16 @@ export default function CheckoutPage() {
         .single();
 
       if (meetingError) throw meetingError;
+      
+      const finalMeetingId = newMeeting.id;
+      setCreatedMeetingId(finalMeetingId);
 
-      // Capture ID for direct chat access
-      setCreatedMeetingId(newMeeting.id);
-
-      // 2. Initialize the chat
+      // Send an automated system message to the new chat box
       await supabase.from('messages').insert({
-        meeting_id: newMeeting.id,
+        meeting_id: finalMeetingId,
         sender_id: userData.id,
         sender_type: 'user',
-        text: `Booking request sent for ${state.date}. Waiting for confirmation.`
+        text: `📅 Booking request sent for ${state.date}. Waiting for confirmation.`
       });
       
       // Trap the back button by pushing a dummy entry to history
@@ -133,8 +133,8 @@ export default function CheckoutPage() {
         >
           <ArrowLeft size={20} />
         </button>
-        <h1 className="text-2xl font-black tracking-tight">
-          Secure <span className="text-primary-gradient">checkout</span>
+        <h1 className="text-2xl font-black tracking-tight capitalize">
+          Secure <span className="bg-gradient-to-r from-brand-purple to-brand-pink bg-clip-text text-transparent">checkout</span>
         </h1>
       </header>
 
@@ -142,7 +142,7 @@ export default function CheckoutPage() {
         
         {/* Booking summary card */}
         <div className="bg-white/[0.03] border border-white/5 rounded-[2.5rem] p-6 shadow-2xl">
-          <p className="text-[10px] font-bold text-zinc-500 mb-4 tracking-tight">Review session</p>
+          <p className="text-[10px] font-bold text-zinc-500 mb-4 tracking-tight capitalize">Review session</p>
           
           <div className="flex items-center gap-4 mb-6 border-b border-white/5 pb-5">
             <img 
@@ -182,37 +182,37 @@ export default function CheckoutPage() {
 
         {/* Payment method selector */}
         <div className="space-y-3">
-          <p className="text-[10px] font-bold text-zinc-500 ml-4 tracking-tight">Payment method</p>
+          <p className="text-[10px] font-bold text-zinc-500 ml-4 tracking-tight capitalize">Payment method</p>
           <div className="p-5 bg-white/5 border border-white/10 rounded-3xl flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-brand-purple border border-white/10">
                 <CreditCard size={24} />
               </div>
               <div>
-                <p className="text-sm font-bold">Instant wallet / Upi</p>
-                <p className="text-[10px] text-zinc-500 font-medium">Encrypted & secure</p>
+                <p className="text-sm font-bold capitalize">Instant wallet / Upi</p>
+                <p className="text-[10px] text-zinc-500 font-medium capitalize">Encrypted & secure</p>
               </div>
             </div>
-            <div className="w-6 h-6 rounded-full border-2 border-primary-gradient flex items-center justify-center">
-              <div className="w-3 h-3 bg-primary-gradient rounded-full shadow-lg shadow-brand-purple/40" />
+            <div className="w-6 h-6 rounded-full border-2 border-brand-purple flex items-center justify-center">
+              <div className="w-3 h-3 bg-gradient-to-r from-brand-purple to-brand-pink rounded-full shadow-lg shadow-brand-purple/40" />
             </div>
           </div>
         </div>
 
         {/* Pricing detail */}
         <div className="p-8 bg-white/[0.02] border border-white/5 rounded-[2.5rem] space-y-4 shadow-inner">
-          <div className="flex justify-between text-zinc-400 text-sm font-medium">
+          <div className="flex justify-between text-zinc-400 text-sm font-medium capitalize">
             <span>Duration fee</span>
             <span className="text-white">₹{subtotal}</span>
           </div>
-          <div className="flex justify-between text-zinc-400 text-sm font-medium">
+          <div className="flex justify-between text-zinc-400 text-sm font-medium capitalize">
             <span>Service fee (5%)</span>
             <span className="text-white">₹{serviceFee}</span>
           </div>
           <div className="h-px bg-white/5 w-full my-4" />
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center capitalize">
             <span className="text-lg font-bold">Total amount</span>
-            <span className="text-3xl font-black text-primary-gradient tracking-tighter">₹{totalAmount}</span>
+            <span className="text-3xl font-black bg-gradient-to-r from-brand-purple to-brand-pink bg-clip-text text-transparent tracking-tighter">₹{totalAmount}</span>
           </div>
         </div>
 
@@ -220,7 +220,7 @@ export default function CheckoutPage() {
         <button 
           onClick={processPaymentAndBook}
           disabled={isProcessing}
-          className="w-full bg-primary-gradient py-6 rounded-3xl font-bold text-sm tracking-widest shadow-2xl shadow-brand-purple/20 active:scale-95 transition-all flex items-center justify-center gap-3 text-white disabled:opacity-40"
+          className="w-full bg-gradient-to-r from-brand-purple to-brand-pink py-6 rounded-3xl font-bold text-sm tracking-widest shadow-2xl shadow-brand-purple/20 active:scale-95 transition-all flex items-center justify-center gap-3 text-white disabled:opacity-40 capitalize"
         >
           {isProcessing ? (
             <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin" />
@@ -248,22 +248,22 @@ export default function CheckoutPage() {
                 <CheckCircle className="text-emerald-500" size={48} />
               </div>
               
-              <h2 className="text-4xl font-black mb-3 tracking-tighter text-white">Confirmed!</h2>
-              <p className="text-zinc-500 font-medium text-sm mb-12">
+              <h2 className="text-4xl font-black mb-3 tracking-tighter text-white capitalize">Confirmed!</h2>
+              <p className="text-zinc-500 font-medium text-sm mb-12 capitalize">
                 Your appointment has been registered. You can now chat with your pro.
               </p>
 
               <div className="space-y-4">
                 <button 
                   onClick={() => navigate(`/messages?chat=${createdMeetingId}`)} 
-                  className="w-full bg-primary-gradient py-5 rounded-3xl font-bold text-sm flex items-center justify-center gap-3 shadow-xl active:scale-95 transition-all"
+                  className="w-full bg-gradient-to-r from-brand-purple to-brand-pink py-5 rounded-3xl font-bold text-sm flex items-center justify-center gap-3 shadow-xl active:scale-95 transition-all capitalize tracking-widest text-white"
                 >
                   <MessageSquare size={20} /> Open chat
                 </button>
 
                 <button 
                   onClick={() => navigate('/home')}
-                  className="w-full bg-white/5 border border-white/10 py-5 rounded-3xl font-bold text-sm flex items-center justify-center gap-3 active:scale-95 transition-all text-zinc-400 hover:text-white"
+                  className="w-full bg-white/5 border border-white/10 py-5 rounded-3xl font-bold text-sm flex items-center justify-center gap-3 active:scale-95 transition-all text-zinc-400 hover:text-white capitalize tracking-widest"
                 >
                   <Home size={20} /> Back to home
                 </button>
