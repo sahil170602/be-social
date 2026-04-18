@@ -43,12 +43,27 @@ export default function ProDetails() {
 
   useEffect(() => {
     const fetchProDetailsAndLists = async () => {
-      setLoading(true);
+      // 1. INSTANT OPEN LOGIC: Check local cache first so we don't have to wait for a loading spinner
+      try {
+        const cachedStr = localStorage.getItem('recentlyViewedPros');
+        if (cachedStr) {
+          const cachedPros = JSON.parse(cachedStr);
+          const localMatch = cachedPros.find((p: any) => p.id === id);
+          if (localMatch) {
+            setPro(localMatch);
+            setLoading(false); // Instantly show UI!
+          }
+        }
+      } catch (e) {}
+
+      // 2. Fetch fresh data in the background
       const { data: proData } = await supabase.from('pro_profiles').select('*').eq('id', id).single();
 
       if (proData) {
         setPro(proData);
+        setLoading(false); // Turn off loading if cache didn't hit
 
+        // Fetch suggested pros
         const { data: sameProfession } = await supabase
           .from('pro_profiles')
           .select('*')
@@ -69,24 +84,42 @@ export default function ProDetails() {
         }
         setSuggestedPros(suggested);
 
-        const storedHistory = localStorage.getItem('recentlyViewedPros');
-        let viewedPros: any[] = storedHistory ? JSON.parse(storedHistory) : [];
-        let historyToShow = viewedPros.filter((p: any) => p.id !== proData.id);
-        setRecentPros(historyToShow.slice(0, 10));
+        // 3. BULLETPROOF STORAGE LOGIC (Fixes QuotaExceededError)
+        try {
+          const storedHistory = localStorage.getItem('recentlyViewedPros');
+          let viewedPros: any[] = storedHistory ? JSON.parse(storedHistory) : [];
+          
+          // Remove current pro if they are already in the list
+          let historyToShow = viewedPros.filter((p: any) => p.id !== proData.id);
+          
+          // Set the recent pros list for the UI (excluding the guy we are currently looking at)
+          setRecentPros(historyToShow.slice(0, 10));
 
-        const proToSave = {
-          id: proData.id,
-          full_name: proData.full_name,
-          avatar_url: proData.avatar_url,
-          profession: proData.profession,
-          rating: proData.rating,
-          price_per_hour: proData.price_per_hour
-        };
-        const updatedHistory = [proToSave, ...historyToShow].slice(0, 10);
-        localStorage.setItem('recentlyViewedPros', JSON.stringify(updatedHistory));
+          // SLIM PROFILE: If avatar is a massive Base64 string, drop it so it doesn't crash the browser memory
+          const safeAvatar = proData.avatar_url && proData.avatar_url.length > 500 ? null : proData.avatar_url;
+
+          const proToSave = {
+            id: proData.id,
+            full_name: proData.full_name,
+            avatar_url: safeAvatar,
+            profession: proData.profession,
+            rating: proData.rating,
+            price_per_hour: proData.price_per_hour
+          };
+          
+          // Prepend new pro, slice to 10, save
+          const updatedHistory = [proToSave, ...historyToShow].slice(0, 10);
+          localStorage.setItem('recentlyViewedPros', JSON.stringify(updatedHistory));
+        } catch (err) {
+          // If storage is STILL full, wipe it clean to prevent total app crashes
+          console.warn("Storage full! Wiping recently viewed pros to save memory.");
+          localStorage.removeItem('recentlyViewedPros');
+        }
+      } else {
+        setLoading(false);
       }
-      setLoading(false);
     };
+    
     fetchProDetailsAndLists();
   }, [id]);
 
@@ -96,7 +129,6 @@ export default function ProDetails() {
 
     setCheckingChat(true);
     try {
-      // 1. Get the current user profile
       const { data: userProfile, error: userError } = await supabase
         .from('user_profiles')
         .select('id')
@@ -108,8 +140,6 @@ export default function ProDetails() {
         return;
       }
 
-      // 2. Check for ANY meeting between this user and this pro
-      // We removed maybeSingle() and used data[0] to be safer
       const { data: existingMeetings, error: meetingError } = await supabase
         .from('meetings')
         .select('id')
@@ -122,10 +152,8 @@ export default function ProDetails() {
       }
 
       if (existingMeetings && existingMeetings.length > 0) {
-        // Chat exists! Navigate to the most recent one
         navigate(`/messages?chat=${existingMeetings[0].id}`);
       } else {
-        // No chat found in database
         setShowBookPopup(true);
       }
     } catch (error) {
@@ -175,12 +203,12 @@ export default function ProDetails() {
       </button>
 
       <div className="relative h-[45vh] w-full">
-
-<img 
-  src={pro?.avatar_url || 'https://placehold.co/600x400/0a0a0a/fff?text=Expert'} 
-  className="w-full h-full object-cover" 
-  alt={pro?.full_name || 'Expert profile'} 
-/>        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/40 to-transparent" />
+        <img 
+          src={pro?.avatar_url || 'https://placehold.co/600x400/0a0a0a/fff?text=Expert'} 
+          className="w-full h-full object-cover" 
+          alt={pro?.full_name || 'Expert profile'} 
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/40 to-transparent" />
       </div>
 
       <main className="px-6 -mt-12 relative z-10 pt-4">
