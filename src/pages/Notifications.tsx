@@ -25,31 +25,55 @@ export default function Notifications() {
   }, [navigate]);
 
   useEffect(() => {
-    fetchNotifications();
-  }, []);
+    let notifChannel: any;
+    let isMounted = true;
 
-  const fetchNotifications = async () => {
-    const userPhone = localStorage.getItem('sb_user_phone');
-    const { data: user } = await supabase.from('user_profiles').select('id').eq('phone', userPhone).single();
+    const loadData = async () => {
+      const userPhone = localStorage.getItem('sb_user_phone');
+      if (!userPhone) {
+        setLoading(false);
+        return;
+      }
 
-    if (user) {
-      const { data } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+      // STRICT USER CHECK: Only look in user_profiles
+      const { data: user } = await supabase.from('user_profiles').select('id').eq('phone', userPhone).single();
 
-      if (data) setNotifications(data);
+      if (user && isMounted) {
+        // Fetch all notifications for this specific user
+        const { data } = await supabase
+          .from('notifications')
+          .select('*')
+          .eq('receiver_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (data) setNotifications(data);
+        
+        // Listen for new notifications in real-time so they pop up instantly!
+        notifChannel = supabase.channel(`notifs-${user.id}`)
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `receiver_id=eq.${user.id}` }, 
+            (payload) => {
+              if (isMounted) setNotifications(prev => [payload.new, ...prev]);
+            }
+          ).subscribe();
+
+        // Mark all as read silently in the background
+        await supabase
+          .from('notifications')
+          .update({ is_read: true })
+          .eq('receiver_id', user.id)
+          .eq('is_read', false);
+      }
       
-      // Mark all as read when opening page
-      await supabase
-        .from('notifications')
-        .update({ is_read: true })
-        .eq('user_id', user.id)
-        .eq('is_read', false);
-    }
-    setLoading(false);
-  };
+      if (isMounted) setLoading(false);
+    };
+
+    loadData();
+
+    return () => {
+      isMounted = false;
+      if (notifChannel) supabase.removeChannel(notifChannel);
+    };
+  }, []);
 
   const deleteNotification = async (id: string) => {
     const { error } = await supabase.from('notifications').delete().eq('id', id);
@@ -85,7 +109,8 @@ export default function Notifications() {
             </button>
             <h1 className="font-extrabold text-[24px] tracking-tight">Notifications</h1>
           </div>
-          <button onClick={fetchNotifications} className="p-2 text-zinc-500 active:scale-90 transition-transform">
+          {/* We'll use a hard refresh if they click the clock */}
+          <button onClick={() => window.location.reload()} className="p-2 text-zinc-500 active:scale-90 transition-transform">
              <Clock size={20} />
           </button>
         </div>
@@ -123,7 +148,8 @@ export default function Notifications() {
                         <Trash2 size={16} />
                       </button>
                     </div>
-                    <p className="text-zinc-400 text-[11px] leading-relaxed capitalize">{n.content}</p>
+                    {/* Render message from the notifications table */}
+                    <p className="text-zinc-400 text-[11px] leading-relaxed capitalize">{n.message}</p>
                     <p className="text-[9px] text-zinc-600 font-bold mt-3">
                       {new Date(n.created_at).toLocaleDateString()} at {new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </p>
