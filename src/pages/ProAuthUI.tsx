@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Phone, ArrowRight, Briefcase, Camera, X, Plus, DollarSign } from 'lucide-react';
+import { Phone, ArrowLeft, ArrowRight, Briefcase, Camera, X, Plus, DollarSign, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import GlassCard from '../components/ui/GlassCard';
 import { supabase } from '../lib/supabaseClient';
@@ -9,6 +9,18 @@ const CATEGORIES = [
   'Photographer', 'Digital Marketer', 'DevOps Engineer', 
   'Illustrator', 'Fitness Coach', 'Content Strategist', 'Video Editor', 'Other'
 ];
+
+const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+const initialWorkingHours = {
+  Monday: { active: true, start: '09:00', end: '18:00' },
+  Tuesday: { active: true, start: '09:00', end: '18:00' },
+  Wednesday: { active: true, start: '09:00', end: '18:00' },
+  Thursday: { active: true, start: '09:00', end: '18:00' },
+  Friday: { active: true, start: '09:00', end: '18:00' },
+  Saturday: { active: false, start: '10:00', end: '15:00' },
+  Sunday: { active: false, start: '10:00', end: '15:00' }
+};
 
 export default function ProAuthUI({ phone, setPhone, step, setStep, loading, handleCheckUser, accentBg, shadowGlow }: any) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -22,7 +34,8 @@ export default function ProAuthUI({ phone, setPhone, step, setStep, loading, han
     custom_profession: '',
     services: [] as string[],
     price_per_hour: '',
-    bio: ''
+    bio: '',
+    working_hours: initialWorkingHours
   });
 
   const [currentService, setCurrentService] = useState('');
@@ -51,6 +64,32 @@ export default function ProAuthUI({ phone, setPhone, step, setStep, loading, han
     setFormData({ ...formData, services: formData.services.filter(s => s !== srv) });
   };
 
+  const toggleDay = (day: string) => {
+    setFormData({
+      ...formData,
+      working_hours: {
+        ...formData.working_hours,
+        [day as keyof typeof formData.working_hours]: {
+          ...formData.working_hours[day as keyof typeof formData.working_hours],
+          active: !formData.working_hours[day as keyof typeof formData.working_hours].active
+        }
+      }
+    });
+  };
+
+  const handleTimeChange = (day: string, field: 'start' | 'end', value: string) => {
+    setFormData({
+      ...formData,
+      working_hours: {
+        ...formData.working_hours,
+        [day as keyof typeof formData.working_hours]: {
+          ...formData.working_hours[day as keyof typeof formData.working_hours],
+          [field]: value
+        }
+      }
+    });
+  };
+
   const handleCompleteRegistration = async () => {
     setIsSubmitting(true);
     const finalProfession = formData.profession === 'Other' ? formData.custom_profession : formData.profession;
@@ -68,6 +107,7 @@ export default function ProAuthUI({ phone, setPhone, step, setStep, loading, han
         services: formData.services,
         price_per_hour: parseInt(formData.price_per_hour),
         bio: formData.bio,
+        working_hours: formData.working_hours, // Saves the complete JSON schedule
         rating: 5.0
       }]);
 
@@ -86,7 +126,7 @@ export default function ProAuthUI({ phone, setPhone, step, setStep, loading, han
         <Briefcase className="mx-auto text-brand-pink mb-4" size={40} />
         <h1 className="text-4xl font-black tracking-tight mb-2 ">Pro Registration</h1>
         <div className="flex justify-center gap-2">
-          {[1, 2, 3].map(i => (
+          {[1, 2, 3, 4].map(i => (
             <div key={i} className={`h-1 w-8 rounded-full transition-all duration-500 ${step >= i ? 'bg-brand-pink' : 'bg-white/10'}`} />
           ))}
         </div>
@@ -161,6 +201,7 @@ export default function ProAuthUI({ phone, setPhone, step, setStep, loading, han
               key="step3"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
               className="space-y-6"
             >
               <select value={formData.profession} onChange={e => setFormData({...formData, profession: e.target.value})} className="w-full bg-white/5 p-4 rounded-xl outline-none border border-white/10">
@@ -193,9 +234,75 @@ export default function ProAuthUI({ phone, setPhone, step, setStep, loading, han
 
               <textarea placeholder="Bio / Experience..." value={formData.bio} onChange={e => setFormData({...formData, bio: e.target.value})} className="w-full bg-white/5 p-4 rounded-xl h-24 outline-none border border-white/10 resize-none" />
 
-              <button onClick={handleCompleteRegistration} disabled={isSubmitting} className={`w-full ${accentBg} py-5 rounded-2xl font-black uppercase text-black`}>
-                {isSubmitting ? 'Creating Profile...' : 'Complete Setup'}
+              <button onClick={() => setStep(4)} className={`w-full ${accentBg} py-5 rounded-2xl font-black uppercase text-black`}>
+                Next: Availability
               </button>
+            </motion.div>
+          )}
+
+          {step === 4 && (
+            <motion.div
+              key="step4"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-4"
+            >
+              <div className="text-center mb-4">
+                <h2 className="text-xl font-black text-white">Availability</h2>
+                <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mt-1">Set your working hours</p>
+              </div>
+
+              <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar pb-4">
+                {DAYS_OF_WEEK.map(day => {
+                  const wh = formData.working_hours[day as keyof typeof formData.working_hours];
+                  return (
+                    <div key={day} className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col gap-3 transition-colors hover:bg-white/10">
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                          <Clock size={16} className={wh.active ? 'text-brand-pink' : 'text-zinc-600'} />
+                          <span className={`font-bold text-sm ${wh.active ? 'text-white' : 'text-zinc-500'}`}>{day}</span>
+                        </div>
+                        
+                        {/* Custom Toggle Switch */}
+                        <button 
+                          onClick={() => toggleDay(day)} 
+                          className={`w-11 h-6 rounded-full transition-colors relative flex items-center shadow-inner ${wh.active ? 'bg-brand-pink' : 'bg-white/10'}`}
+                        >
+                          <div className={`w-4 h-4 bg-white rounded-full absolute shadow-md transition-all ${wh.active ? 'left-[24px]' : 'left-1'}`} />
+                        </button>
+                      </div>
+
+                      {wh.active && (
+                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="flex gap-2 items-center border-t border-white/5 pt-3 mt-1">
+                          <input 
+                            type="time" 
+                            value={wh.start} 
+                            onChange={e => handleTimeChange(day, 'start', e.target.value)} 
+                            className="bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-xs flex-1 outline-none focus:border-brand-pink text-white [color-scheme:dark]" 
+                          />
+                          <span className="text-[10px] font-bold text-zinc-500 uppercase">To</span>
+                          <input 
+                            type="time" 
+                            value={wh.end} 
+                            onChange={e => handleTimeChange(day, 'end', e.target.value)} 
+                            className="bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-xs flex-1 outline-none focus:border-brand-pink text-white [color-scheme:dark]" 
+                          />
+                        </motion.div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="pt-2 flex gap-3">
+                <button onClick={() => setStep(3)} className="w-16 flex items-center justify-center bg-white/5 py-5 rounded-2xl text-white active:scale-95 transition-all">
+                  <ArrowLeft size={20} />
+                </button>
+                <button onClick={handleCompleteRegistration} disabled={isSubmitting} className={`flex-1 ${accentBg} py-5 rounded-2xl font-black uppercase text-black active:scale-95 transition-all`}>
+                  {isSubmitting ? 'Finalizing...' : 'Complete Setup'}
+                </button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -203,3 +310,4 @@ export default function ProAuthUI({ phone, setPhone, step, setStep, loading, han
     </div>
   );
 }
+
